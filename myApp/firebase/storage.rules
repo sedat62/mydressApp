@@ -1,0 +1,29 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Product images - anyone can read, only admins can write
+    match /products/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // User uploads (photos for AI generation) - owner can read/write
+    match /uploads/{userId}/{allPaths=**} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Generated AI images - owner can read, admins can read all
+    match /generations/{userId}/{allPaths=**} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == userId ||
+         firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow write: if false; // only Cloud Functions can write
+    }
+  }
+}
