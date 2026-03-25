@@ -34,20 +34,16 @@ export async function uploadImageBase64(localUri: string): Promise<string> {
 export async function createTryOnTask(
   userPhotoUrl: string,
   productImageUrl: string,
-  productName: string,
+  _productName: string,
 ): Promise<string> {
-  const prompt = `Edit the image to dress the person using the provided clothing image ("${productName}"). Preserve their exact likeness, face, expression, hairstyle, skin tone, body shape, and proportions. Replace only the clothing, fitting the garment naturally to their existing pose and body geometry with realistic fabric behavior. Match lighting, shadows, and color temperature to the original photo so the outfit integrates photorealistically, without looking pasted on.`;
-
   const res = await fetch(`${KIE_API_BASE}/api/v1/jobs/createTask`, {
     method: 'POST',
     headers,
     body: JSON.stringify({
-      model: 'gpt-image/1.5-image-to-image',
+      model: 'kolors-virtual-try-on',
       input: {
-        input_urls: [userPhotoUrl, productImageUrl],
-        prompt,
-        aspect_ratio: '2:3',
-        quality: 'medium',
+        human_image: userPhotoUrl,
+        cloth_image: productImageUrl,
       },
     }),
   });
